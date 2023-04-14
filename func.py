@@ -1,0 +1,147 @@
+from flask import Flask, redirect, render_template, jsonify
+from flask_debugtoolbar import DebugToolbarExtension
+import requests, json
+from keys import REC_API_KEY
+
+REC_BASE_URL = "https://ridb.recreation.gov/api/v1"
+ACTIVITIES = "activities"
+CAMPSITES = "campsites"
+EVENTS = "events"
+FACILITIES = "facilities"
+PERMIT = "permitentrances"
+RECAREAS = "recareas"
+TOURS = "tours"
+
+#################### GENERAL SEARCH FUNCTIONS ###################
+def resource_search(endpoint, query="", limit="", offset="", full="", state="", activity="", latitude="", longitude="", radius="", sort=""):
+    """Get request is sent to Recreaction.gov API containing search parameters.
+	
+	Keyword arguments:
+    endpoint -- required
+	query -- optional, keyword
+    limit -- optional, max records returned
+    offset -- optional
+    full -- optional, true or false
+    state -- optional, two letter state code
+    activity -- optional
+    latitude -- optional
+    longitute -- optional
+    radius -- optional, miles
+    sort -- ID, Date, or Name
+	Return: dict with requested data
+	"""
+	
+
+    resp = requests.get(f"{REC_BASE_URL}/{endpoint}",
+		params={
+			"apikey" : REC_API_KEY,
+			"query" : query,
+			"limit" : limit,
+			"offset" : offset,
+			"full" : full,
+			"state" : state,
+			"activity" : activity,
+			"latitude": latitude,
+			"longitude" : longitude,
+			"radius" : radius,
+			"sort" : sort
+		})
+    return resp.json()
+
+def resource_by_id(endpoint, id):
+    resp = requests.get(f"{REC_BASE_URL}/{endpoint}/{id}", params={"apikey" : REC_API_KEY, "full" : "true"})
+    return resp.json()
+
+def child_resources_by_parent(parent_resource_endpoint, parent_source_id, child_resource_name, query="", limit="", offset=""):
+    resp = requests.get(f"{REC_BASE_URL}/{parent_resource_endpoint}/{parent_source_id}/{child_resource_name}",
+		params={
+			"apikey" : REC_API_KEY,
+			"query" : query,
+			"limit" : limit,
+			"offset" : offset,
+            "full" : "true"
+		})
+    return resp.json()
+
+#######################SPECIFIC SEARCH FUNCTIONS######################################
+
+def find_campgrounds_by_location(lat, long):
+    
+    data = resource_search(FACILITIES, activity="CAMPING", latitude=lat, longitude=long)
+    return clean_campgrounds(data)
+
+def find_recareas_by_location(state="", lat="", long=""):
+    data = resource_search(RECAREAS, state=state, latitude=lat, longitude=long)
+    return clean_rec_areas(data)
+
+########### DATA CLEANING FUNCTIONS ##############
+
+def clean_campgrounds(data):
+    facilities = data["RECDATA"]
+    filtered_facilities = [campground for campground in facilities if campground["FacilityTypeDescription"] == "Campground"]
+    clean_campgrounds = [{
+        "name" : campground.get("FacilityName"),
+        "id" : campground.get("FacilityID"),
+        "email" : campground.get("FacilityEmail"),
+        "phone" : campground.get("FacilityPhone"),
+        "address" : clean_address(campground.get("FACILITYADDRESS"), "Facility"),
+        "type" : campground.get("FacilityTypeDescription"),
+        "acivities" : name_id_only(campground.get("ACTIVITY"), "Activity"),
+        "ada" : campground.get("FacilityAdaAccess"),
+        "description" : campground.get("FacilityDescription"),
+        "directions" : campground.get("FacilityDirections"),
+        "coordinates" : campground.get("GEOJSON").get("COORDINATES"),
+        "parent_org_id" : campground.get("ParentOrgID"),
+        "parent_rec_area_id" : campground.get("ParentRecAreaID")
+		} 
+        for campground in filtered_facilities]
+    return clean_campgrounds
+
+def clean_rec_areas(data):
+    rec_areas = data["RECDATA"]
+    clean_rec_areas = [{
+        "name" : area.get("RecAreaName"),
+        "id" : area.get("RecAreaID"),
+        "phone" : area.get("RecAreaPhone"),
+        "email" : area.get("RecAreaEmail"),
+        "address" : clean_address(area.get("RECAREAADDRESS"), "RecArea"),
+        "description" : area.get("RecAreaDescription"),
+        "directions" : area.get("RecAreaDirections"),
+        "coordinates" : area.get("GEOJSON").get("COORDINATES"),
+        "activities" : name_id_only(area.get("ACTIVITY"), "Activity"),
+        "facilities" : name_id_only(area.get("FACILITY"), "Facility"),
+        "parent_org_id" : area.get("ParentOrgID"),
+        "links" : clean_links(area.get("LINK"))
+		} 
+        for area in rec_areas]
+    return clean_rec_areas
+
+def name_id_only(list, type):
+    info = [{
+		"id" : data.get(f"{type}ID"), 
+		"name" : data.get(f"{type}Name")
+		} 
+		for data in list]
+    return info
+
+def clean_address(add_list, resource_type):
+    addresses = [{
+        "address_type" : address.get(f"{resource_type}AddressType"),
+		"street_address_1" : address.get(f"{resource_type}StreetAddress1"),
+		"street_address_2" : address.get(f"{resource_type}StreetAddress2"),
+		"street_address_3" : address.get(f"{resource_type}StreetAddress3"),
+		"city" : address.get("City"),
+		"state" : address.get("AddressStateCode"),
+		"postal_code" : address.get("PostalCode")
+		}
+    	for address in add_list]
+    return addresses
+
+def clean_links(list):
+    links = [{
+        "title" : link.get("Title"),
+        "type" : link.get("LinkType"),
+        "url" : link.get("URL")
+		}
+        for link in list]
+    return links
