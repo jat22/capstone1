@@ -2,7 +2,7 @@ from flask import Flask, redirect, render_template, jsonify
 from flask_debugtoolbar import DebugToolbarExtension
 import requests, json
 from keys import REC_API_KEY
-from func import resource_search, resource_by_id, child_resources_by_parent, key_format_endpoint, find_recareas_by_location, find_campgrounds_by_location
+from func import find_recareas_by_location, find_campgrounds_by_location, find_activities_by_loaction, find_facilities_by_location, find_hotels_by_location, find_activities_by_recarea, find_facilities_by_recarea, find_activities_by_facility
 
 app = Flask(__name__)
 app.app_context().push()
@@ -22,8 +22,12 @@ PERMIT = "permitentrances"
 RECAREAS = "recareas"
 TOURS = "tours"
 
-camping_near_gtlbrg = find_campgrounds_by_location("35.7143", "-83.5102")
+# camping_near_gtlbrg = find_campgrounds_by_location("35.7143", "-83.5102")
 
-rec_areas_in_ME = find_recareas_by_location(state="ME")
+# rec_areas_in_ME = find_recareas_by_location(state="ME")
 
+# facilities_near_gtlbrg =find_facilities_by_location(lat="35.7143", long="-83.5102")
 
+# activities_near_gtlbrg = find_activities_by_loaction(activity="hiking", lat="35.7143", long="-83.5102")
+
+hotels = find_hotels_by_location(lat="35.4356", long="-83.8191")

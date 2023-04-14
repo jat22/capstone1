@@ -1,6 +1,6 @@
 from flask import Flask, redirect, render_template, jsonify
 from flask_debugtoolbar import DebugToolbarExtension
-import requests, json
+import requests, json, asyncio
 from keys import REC_API_KEY
 
 REC_BASE_URL = "https://ridb.recreation.gov/api/v1"
@@ -13,7 +13,7 @@ RECAREAS = "recareas"
 TOURS = "tours"
 
 #################### GENERAL SEARCH FUNCTIONS ###################
-def resource_search(endpoint, query="", limit="", offset="", full="", state="", activity="", latitude="", longitude="", radius="", sort=""):
+def resource_search(endpoint, query="", limit="", offset="", full="", state="", activity="", lat="", long="", radius="", sort=""):
     """Get request is sent to Recreaction.gov API containing search parameters.
 	
 	Keyword arguments:
@@ -41,8 +41,8 @@ def resource_search(endpoint, query="", limit="", offset="", full="", state="", 
 			"full" : full,
 			"state" : state,
 			"activity" : activity,
-			"latitude": latitude,
-			"longitude" : longitude,
+			"latitude": lat,
+			"longitude" : long,
 			"radius" : radius,
 			"sort" : sort
 		})
@@ -63,22 +63,59 @@ def child_resources_by_parent(parent_resource_endpoint, parent_source_id, child_
 		})
     return resp.json()
 
-#######################SPECIFIC SEARCH FUNCTIONS######################################
+#######################LOCATION BASED SEARCH FUNCTIONS######################################
 
 def find_campgrounds_by_location(lat, long):
-    
-    data = resource_search(FACILITIES, activity="CAMPING", latitude=lat, longitude=long)
+    data = resource_search(FACILITIES, activity="CAMPING", lat=lat, long=long)
     return clean_campgrounds(data)
 
 def find_recareas_by_location(state="", lat="", long=""):
-    data = resource_search(RECAREAS, state=state, latitude=lat, longitude=long)
+    data = resource_search(RECAREAS, state=state, lat=lat, long=long)
     return clean_rec_areas(data)
+
+def find_facilities_by_location(state="", lat="", long=""):
+    data = resource_search(FACILITIES, state=state, lat=lat, long=long)
+    return clean_facilities(data)
+
+def find_activities_by_loaction(activity, state="", lat="", long=""):
+    facilities = find_facilities_by_location(state, lat, long)
+    activity_locations = [{"fac_id" : facility.get("id"), "coordinates" : facility.get("coordinates")} 
+                          for facility in facilities 
+                          if any(a for a in facility.get("activities") 
+                                 if a.get("name") == activity)]
+    return activity_locations
+    
+#######################RESOURCE BASED SEARCH FUNCTIONS#####################################
+
+def find_activities_by_recarea(recarea_id):
+    data = child_resources_by_parent(RECAREAS, recarea_id, ACTIVITIES)
+    activities = name_id_only(data)
+    return activities
+ 
+def find_facilities_by_recarea(recarea_id):
+    data = child_resources_by_parent(RECAREAS, recarea_id, FACILITIES)
+    facilities = clean_facilities(data)
+    return facilities
+
+def find_activities_by_facility(facility_id):
+    data = child_resources_by_parent(FACILITIES, facility_id, ACTIVITIES)
+    activities = name_id_only(data)
+    return activities
+    
+def find_campgrounds_by_recarea(recarea_id):
+    facilities = find_facilities_by_recarea(recarea_id)
+    campgrounds = filter_facilities("Campground", facilities)
+    return campgrounds
 
 ########### DATA CLEANING FUNCTIONS ##############
 
+def filter_facilities(type, facilities):
+    filtered_facilities = [facility for facility in facilities if facility["FacilityTypeDescription"] == f"{type}"]
+    return filtered_facilities
+
 def clean_campgrounds(data):
     facilities = data["RECDATA"]
-    filtered_facilities = [campground for campground in facilities if campground["FacilityTypeDescription"] == "Campground"]
+    filtered_facilities = filter_facilities("Campground", facilities) 
     clean_campgrounds = [{
         "name" : campground.get("FacilityName"),
         "id" : campground.get("FacilityID"),
@@ -92,10 +129,31 @@ def clean_campgrounds(data):
         "directions" : campground.get("FacilityDirections"),
         "coordinates" : campground.get("GEOJSON").get("COORDINATES"),
         "parent_org_id" : campground.get("ParentOrgID"),
-        "parent_rec_area_id" : campground.get("ParentRecAreaID")
+        "parent_rec_area_id" : campground.get("ParentRecAreaID"),
+        "links" : clean_links(campground.get("LINK"))
 		} 
         for campground in filtered_facilities]
     return clean_campgrounds
+
+def clean_facilities(data):
+    facilities = data["RECDATA"]
+    clean_facilities = [{
+        "name" : facility.get("FacilityName"),
+        "id" : facility.get("FacilityID"),
+        "email" : facility.get("FacilityEmail"),
+        "phone" : facility.get("FacilityPhone"),
+        "address" : clean_address(facility.get("FACILITYADDRESS"), "Facility"),
+        "type" : facility.get("FacilityTypeDescription"),
+        "activities" : name_id_only(facility.get("ACTIVITY"), "Activity"),
+        "ada" : facility.get("FacilityAdaAccess"),
+        "description" : facility.get("FacilityDescription"),
+        "directions" : facility.get("FacilityDirections"),
+        "coordinates" : facility.get("GEOJSON").get("COORDINATES"),
+        "parent_org_id" : facility.get("ParentOrgID"),
+        "parent_rec_area_id" : facility.get("ParentRecAreaID"),
+        "links" : clean_links(facility.get("LINK"))
+		} for facility in facilities]
+    return clean_facilities
 
 def clean_rec_areas(data):
     rec_areas = data["RECDATA"]
@@ -119,7 +177,7 @@ def clean_rec_areas(data):
 def name_id_only(list, type):
     info = [{
 		"id" : data.get(f"{type}ID"), 
-		"name" : data.get(f"{type}Name")
+		"name" : data.get(f"{type}Name").lower()
 		} 
 		for data in list]
     return info
