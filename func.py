@@ -77,7 +77,7 @@ def find_facilities_by_location(state="", lat="", long=""):
     data = resource_search(FACILITIES, state=state, lat=lat, long=long)
     return clean_facilities(data)
 
-def find_activities_by_loaction(activity, state="", lat="", long=""):
+def find_activities_by_location(activity, state="", lat="", long=""):
     facilities = find_facilities_by_location(state, lat, long)
     activity_locations = [{"fac_id" : facility.get("id"), "coordinates" : facility.get("coordinates")} 
                           for facility in facilities 
@@ -86,10 +86,13 @@ def find_activities_by_loaction(activity, state="", lat="", long=""):
     return activity_locations
     
 #######################RESOURCE BASED SEARCH FUNCTIONS#####################################
+def get_all_activities():
+    data = resource_search("activities")["RECDATA"]
+    return name_id_only(data, "Activity")
 
 def find_activities_by_recarea(recarea_id):
-    data = child_resources_by_parent(RECAREAS, recarea_id, ACTIVITIES)
-    activities = name_id_only(data)
+    data = child_resources_by_parent(RECAREAS, recarea_id, ACTIVITIES)["RECDATA"]
+    activities = name_id_only(data, "Activity")
     return activities
  
 def find_facilities_by_recarea(recarea_id):
@@ -197,6 +200,7 @@ def clean_address(add_list, resource_type):
 
 def clean_links(list):
     links = [{
+        "id" : link.get("EntityLinkID"),
         "title" : link.get("Title"),
         "type" : link.get("LinkType"),
         "url" : link.get("URL")
