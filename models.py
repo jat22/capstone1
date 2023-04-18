@@ -34,6 +34,7 @@ class Facility(db.Model):
 
 	def __repr__(self):
 		return f"<Facility #{self.id}: {self.name}, {self.type}>"
+
 	
 class RecArea(db.Model):
 	__tablename__ = "rec_areas"
@@ -115,24 +116,45 @@ class FacilityActivity(db.Model):
 		    primary_key=True)
 	facility = db.Column(db.ForeignKey('facilities.id'),
 		    primary_key=True)
-	
+
 class User(db.Model):
 	__tablename__ = "users"
 
 	username = db.Column(db.Text,
-		    primary_key=True,
+			primary_key=True,
 			autoincrement=False)
+	email = db.Column(db.Text,
+		   	nullable=False)
+	password = db.Column(db.Text,
+		    nullable=False)
 	first_name = db.Column(db.Text)
 	last_name = db.Column(db.Text)
-	email = db.Column(db.Text)
 	phone = db.Column(db.Text)
-	state = db.Column(db.Text)
+	street_address = db.Column(db.Text)
 	city = db.Column(db.Text)
-	address = db.Column(db.Text)
-	zip_code = db.Column(db.Text)
+	state = db.Column(db.Text)
 	
 	def __repr__(self):
-		return f"<User: {self.username}>"
+		return f"<User:{self.username}>"
+		
+	@classmethod
+	def signup(cls, username, email, password):
+		hashed_pwd = bcrypt.generate_password_hash(password).decode('UTF-8')
+
+		user = User(username=username, email=email, password=hashed_pwd)
+
+		db.session.add(user)
+
+	@classmethod
+	def authenticate(cls, username, password):
+		user = cls.query.filter_by(username=username).first()
+
+		if user:
+			if bcrypt.check_password_hash(user.password, password):
+				return user
+		
+		return False
+
 	
 class Trip(db.Model):
 	__tablename__ = "trips"
@@ -142,10 +164,12 @@ class Trip(db.Model):
 	name = db.Column(db.Text)
 	start_date = db.Column(db.Date)
 	end_date = db.Column(db.Date)
+	comments = db.Column(db.Text)
 	user = db.Column(db.ForeignKey("users.username"))
+	
 
 	def __repr__(self):
-		return f"<Vacation: {self.name} for {self.user}>"
+		return f"<Trip: {self.name} for {self.user}>"
 	
 class TripActivity(db.Model):
 	__tablename__ = "trip_activities"

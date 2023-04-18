@@ -78,10 +78,14 @@ def find_facilities_by_location(state="", lat="", long=""):
     return clean_facilities(data)
 
 def find_activities_by_location(activity, state="", lat="", long=""):
-    facilities = find_facilities_by_location(state, lat, long)
-    activity_locations = [{"fac_id" : facility.get("id"), "coordinates" : facility.get("coordinates")} 
-                          for facility in facilities 
-                          if any(a for a in facility.get("activities") 
+    """ Search for activities by location and return a list of dictionaries with facility name and location where activities are located:
+                [{fac_id, coordinates}]
+    """
+    
+    recareas = find_recareas_by_location(state, lat, long)
+    activity_locations = [{"id" : recarea.get("id"), "name" : recarea.get("name")} 
+                          for recarea in recareas 
+                          if any(a for a in recarea.get("activities") 
                                  if a.get("name") == activity)]
     return activity_locations
     
@@ -207,3 +211,27 @@ def clean_links(list):
 		}
         for link in list]
     return links
+
+
+def do_search(type, term, state):
+    if type == "activities":
+        results = find_activities_by_location(activity=term, state=state)
+        return results
+
+
+
+    # camping_near_gtlbrg = find_campgrounds_by_location("35.7143", "-83.5102")
+
+# rec_areas_in_ME = find_recareas_by_location(state="ME")
+
+# facilities_near_gtlbrg =find_facilities_by_location(lat="35.7143", long="-83.5102")
+
+# activities_near_gtlbrg = find_activities_by_loaction(activity="hiking", lat="35.7143", long="-83.5102")
+
+# hotels = find_hotels_by_location(lat="35.4356", long="-83.8191")
+# ACTIVITIES = "activities"
+# CAMPSITES = "campsites"
+# FACILITIES = "facilities"
+# PERMIT = "permitentrances"
+# RECAREAS = "recareas"
+# TOURS = "tours"

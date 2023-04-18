@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+
+{% block title%}My Trips{% endblock %}
+
+{% block content %}
+<div class="contatiner">
+	<h2>My Trips</h2>
+</div>
+<div class="container">
+	{% for trip in trips %}
+	<div class="card" id="trip#{{ trip.id }}">
+		<div class="card-body">
+			<h4 class="card-title">{{ trip.name }}</h5>
+			<h5 class="card-text">{{ trip.start_date}} => {{ trip.end_date }}</h5>
+			<p class="card-text">{{ trip.comments }}</p>
+		</div>
+	</div>
+	{% endfor %}
+</div>
+
+{% endblock %}

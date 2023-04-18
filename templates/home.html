@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+
+{% block title %}TrippingOutdoors{% endblock %}
+
+{% block content %}
+
+<div class="container">
+	<div class="container">
+		<form action="/search">
+
+			<input type="radio" class="btn-check" name="type" id="activities" value="activities" autocomplete="off" checked>
+			<label class="btn btn-outline-secondary" for="activities">Activites</label>
+
+			<input type="radio" class="btn-check" name="type" id="parks" value="parks" autocomplete="off">
+			<label class="btn btn-outline-secondary" for="parks">Parks/Facilities</label>
+
+			<input type="radio" class="btn-check" name="type" id="campgrounds" value="campgrounds" autocomplete="off">
+			<label class="btn btn-outline-secondary" for="campgrounds">Campgrounds</label>
+
+			<div class="mb-3">
+				<label class="form-label" for="search">Search</label>
+				<input class ="form-control" id="search" placeholder="search" name="term">
+				<label class="form-label" for="stater">State</label>
+				<input class ="form-control" id="state" placeholder="search" name="state">
+			</div>
+			<button type="submit" class="btn btn-secondary">Search</button>
+		</form>
+	</div>
+</div>
+
+
+{% endblock %}
+
