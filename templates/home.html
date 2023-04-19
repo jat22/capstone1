@@ -4,30 +4,46 @@
 
 {% block content %}
 
+{% block search %}
 <div class="container">
 	<div class="container">
-		<form action="/search">
+		<form>
+			<div class="mb-3" id="search-params">
 
-			<input type="radio" class="btn-check" name="type" id="activities" value="activities" autocomplete="off" checked>
-			<label class="btn btn-outline-secondary" for="activities">Activites</label>
+				<input type="radio" class="btn-check" name="search-type" id="activities" value="activities" autocomplete="off" checked>
+				<label class="btn btn-outline-secondary" for="activities">Activites</label>
+	
+				<input type="radio" class="btn-check" name="search-type" id="facilities" value="facilities" autocomplete="off">
+				<label class="btn btn-outline-secondary" for="facilities">Parks/Facilities</label>
+	
+				<input type="radio" class="btn-check" name="search-type" id="campgrounds" value="campgrounds" autocomplete="off">
+				<label class="btn btn-outline-secondary" for="campgrounds">Campgrounds</label>
+				
+				<div style="margin-top:30px;">
+					<input type="radio" class="btn-check" name="location-type" id="city-state" value="city-state" autocomplete="off" checked>
+					<label class="btn btn-outline-secondary" for="city-state">City/State</label>
 
-			<input type="radio" class="btn-check" name="type" id="parks" value="parks" autocomplete="off">
-			<label class="btn btn-outline-secondary" for="parks">Parks/Facilities</label>
+					<input type="radio" class="btn-check" name="location-type" id="zip" value="zip" autocomplete="off">
+					<label class="btn btn-outline-secondary" for="zip">ZipCode</label>
 
-			<input type="radio" class="btn-check" name="type" id="campgrounds" value="campgrounds" autocomplete="off">
-			<label class="btn btn-outline-secondary" for="campgrounds">Campgrounds</label>
-
-			<div class="mb-3">
-				<label class="form-label" for="search">Search</label>
-				<input class ="form-control" id="search" placeholder="search" name="term">
-				<label class="form-label" for="stater">State</label>
-				<input class ="form-control" id="state" placeholder="search" name="state">
+					<input class ="form-control" id="city-field" placeholder="City" name="city" style="margin-top:10px;">
+					<input class ="form-control" id="state-field" placeholder="State" name="state" style="margin-top:10px;">
+					<input class ="form-control" id="zip-field" placeholder="Zip Code" name="zip" style="margin-top:10px; display:none;">
+				</div>
 			</div>
-			<button type="submit" class="btn btn-secondary">Search</button>
+			<button type="submit" class="btn btn-secondary" id="search-btn">Search</button>
 		</form>
 	</div>
 </div>
-
+<div class="container" display="none">
+	<div class="card">
+		<div class="card-body">
+			<ul class="list-group list-group-flush" id="results-list">
+			</ul>
+		</div>	
+	</div>
+</div>
+{% endblock %}
 
 {% endblock %}
 

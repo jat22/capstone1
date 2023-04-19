@@ -5,3 +5,4 @@ test.py
 __pycache__/
 venv/
 keys.py
+testdata.py

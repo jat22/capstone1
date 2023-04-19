@@ -3,15 +3,15 @@
 {% block title%}My Trips{% endblock %}
 
 {% block content %}
-<div class="contatiner">
+<div class="contatiner" style="margin-left:20px">
 	<h2>My Trips</h2>
 </div>
 <div class="container">
 	{% for trip in trips %}
 	<div class="card" id="trip#{{ trip.id }}">
 		<div class="card-body">
-			<h4 class="card-title">{{ trip.name }}</h5>
-			<h5 class="card-text">{{ trip.start_date}} => {{ trip.end_date }}</h5>
+			<a href="/trips/{{trip.id}}"><h4 class="card-title">{{ trip.name }}</h4></a>
+			<h5 class="card-subtitle">{{ trip.start_date}} => {{ trip.end_date }}</h5>
 			<p class="card-text">{{ trip.comments }}</p>
 		</div>
 	</div>

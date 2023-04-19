@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+
+{% block title %}{{trip.name}}{% endblock %}
+
+{% block content %}
+
+<div class="container">
+	<div class="card" id="trip#{{ trip.id }}">
+		<div class="card-body">
+			<h4 class="card-title">{{ trip.name }}</h5>
+			<h5 class="card-subtitle">{{ trip.start_date}} => {{ trip.end_date }}</h5>
+			<p class="card-text">{{ trip.comments }}</p>
+			<ul class="list-group list-group-flush">
+			{% for activity in activities %}
+				<li class="list-group-item" id="act#{{activit.id}}">{{activity.name}}</li>
+			{% endfor %}
+			</ul>
+			<form action="/search">
+				<button class="btn btn-secondary">Add Activities</button>
+			</form>
+		</div>
+	</div>
+	<form action="/trip/{{trip.id}}" method="PATCH">
+		<button class="btn btn-secondary">Edit Trip</button>
+	</form>
+</div>
+
+{% endblock %}
