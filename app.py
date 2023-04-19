@@ -2,7 +2,7 @@ from flask import Flask, redirect, render_template, url_for, request, flash, ses
 from flask_debugtoolbar import DebugToolbarExtension
 import requests, json
 from keys import REC_API_KEY, MAPS_KEY, TOMTOM_KEY
-from func import do_search, get_coordinates, geolocation_search, resource_search
+from func import get_coordinates, geolocation_search, resource_search, activities_with_parent_resources_by_location, recareas_by_location, campgrounds_by_location
 from sqlalchemy.exc import IntegrityError
 
 from models import db, connect_db, RecArea, Facility, RecAreaFacility, Link, FacilityActivity, Activity, TripActivity, Trip, CampgroundStays, User, CheckList, CheckListItem
@@ -55,9 +55,13 @@ def show_search_results():
     city = request.args.get("city")
     state = request.args.get("state")
     zip = request.args.get("zip")
+    if search_type == "activities" :
+        results = activities_with_parent_resources_by_location(location_type, city, state, zip)
+    if search_type == "parks":
+        results = recareas_by_location(location_type, city, state, zip)
+    if search_type == "campgrounds":
+        results = campgrounds_by_location(location_type, city, state, zip)
 
-    results = do_search(search_type, location_type, city, state, zip)
-    
     return results
 
 @app.route('/signup', methods=["GET", "POST"])
