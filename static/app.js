@@ -10,7 +10,7 @@ const $resultsList = $('#results-list')
 
 const $searchBtn = $('#search-btn')
 
-function toggle_search_type(){
+function toggleSearchType(){
 	if($cityStateSelector.is(' :checked')){
 		$("#city-field").show();
 		$("#state-field").show();
@@ -23,41 +23,56 @@ function toggle_search_type(){
 	}
 }
 
-$searchParams.on('click', toggle_search_type)
-
-
-// async function do_search(evt){
-// 	evt.preventDefault();
-// 	$resultsList.empty();
-// 	search_type = $("input[name='search-type']:checked").val()
-// 	const resp = await axios.get('/api/search', {
-// 		params : {
-// 			search_type : search_type,
-// 			location_type : $("input[name='location-type']:checked").val(),
-// 			city : $('#city-field').val(),
-// 			state : $('#state-field').val(),
-// 			zip : $('#zip-field').val()
-// 		}
-// 	})
-// 	results = resp.data;
-
-// 	console.log(results)
-// 	render_search_results(results, search_type)
-// }
-
-// $searchBtn.on('click', do_search)
+$searchParams.on('click', toggleSearchType)
 
 
 
-// function render_search_results(results, search_type){
-// 	if(search_type == "activities"){
+function showResourceDetails(evt){
+	$("#search-box").hide();
+	$("#results-container").hide();
+	$("#results-list").empty()
 
-// 	}
+	const resourceId = evt.target.id
+
+	const resources = JSON.parse(results)
+
+	const resource = resources.find( res => res.name === resourceId)
+		
+	resource.parents.forEach( res => 
+		$("#results-list").append(
+			`<li class='list-group-item' id='${res.id}'>
+			<form action="/${res.type}/${res.id}">
+			<button type="submit" class="btn btn-link">${res.name}</button>
+			</form>
+			</li>`
+		)
+	)
+	$("#resources-back-btn").show()
+	// $('#results-card').append("<button class='btn btn-secondary' id='resources-back-btn'>Back</button>")
 	
-// 	results.forEach(result =>
-// 		$resultsList.append( 
-// 			`<li class="list-group-item" id=${result.id}>${result.id}</li>`)
-// 		)
+	$("#results-container").show()
 	
-// }
+}
 
+$('li').on('click', showResourceDetails)
+
+
+function backToSearchResults(evt){
+	evt.preventDefault();
+	console.log('click')
+	$("#results-container").hide();
+	$("#results-list").empty()
+
+	const resources = JSON.parse(results)
+	
+	resources.forEach( res => 
+		$("#results-list").append(
+			`<li class="list-group-item" id="${res.name}">
+			${res.name}
+			</li>`
+		))
+	$('li').on('click', showResourceDetails)
+	$("#results-container").show()
+}
+
+$('#resources-back-btn').on('click', backToSearchResults)

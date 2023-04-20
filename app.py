@@ -63,15 +63,15 @@ def show_search_results():
     if search_type == "campgrounds":
         results = campgrounds_by_location(location_type, city, state, zip)
 
-    raise
-    session[CURR_RESULTS] = "TEST"
 
     return render_template('search.html', results=results, search_type=search_type)
 
 @app.route('/activities/<activity>')
 def show_activity(activity):
+    
+    results = request.args.get("results")
+    raise
 
-    # recareas = [activity['reacareas'] for activity in session[CURR_RESULTS] if activity['id'] == activity]
     return render_template('resource-details.html', activity=activity)
 
 @app.route('/signup', methods=["GET", "POST"])
