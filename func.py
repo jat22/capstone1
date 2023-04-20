@@ -33,6 +33,14 @@ def resource_search(endpoint, query="", limit="", offset="", full="true", state=
 		})
     return resp.json()
 
+def resource_search_by_id(endpoint, id):
+    resp = requests.get(f"{REC_BASE_URL}/{endpoint}/{id}",
+		params={
+			"apikey" : REC_API_KEY,
+            "full" : "true"
+		})
+    return resp.json()
+
 def activities_with_parent_resources_by_location(location_type, city="", state="", zip=""):
     coords = get_coordinates(location_type, city, state, zip)
     lat = coords[0].get('lat')
@@ -75,7 +83,7 @@ def recareas_by_location(location_type, city="", state="", zip=""):
     lat = coords[0].get('lat')
     long = coords[0].get('lon')
 
-    recareas = clean_rec_areas(resource_search(RECAREAS, lat=lat, long=long)["RECDATA"])
+    recareas = clean_resource(resource_search(RECAREAS, lat=lat, long=long)["RECDATA"], "RecArea")
     return recareas
 
 def campgrounds_by_location(location_type, city="", state="", zip=""):
@@ -83,10 +91,22 @@ def campgrounds_by_location(location_type, city="", state="", zip=""):
     lat = coords[0].get('lat')
     long = coords[0].get('lon')
 
-    facilities = clean_facilities(resource_search(FACILITIES, lat=lat, long=long)["RECDATA"])
+    facilities = clean_resource(resource_search(FACILITIES, lat=lat, long=long)["RECDATA"], "Facility")
     campgrounds = filter_(facilities)
 
     return campgrounds
+
+def get_resource_details(type, id):
+    endpoint = ""
+
+    if type == "RecArea":
+        endpoint = "recareas"
+    if type == "Facility":
+        endpoint = "facilities"
+
+    resource = clean_resource([resource_search_by_id(endpoint, id)], type)
+    return resource
+
 
 ################################# GEOLOCATION ##################################
     
@@ -133,59 +153,46 @@ def min_data(data, type):
         for area in rec_areas]
     return clean_rec_areas
 
-# def facility_ min_data(data):
-#     facilities = data
-#     clean_facilities = [{
-#         "name" : facility.get("FacilityName"),
-#         "id" : facility.get("FacilityID"),
-#         "activities" : clean_activities(
-#             facility.get("ACTIVITY"), RECAREAS, facility.get("FacilityID")),
-#         }
-#         for facility in facilities]
-#     return clean_facilities
-
-def clean_rec_areas(data):
-    rec_areas = data
-    clean_rec_areas = [{
-        "name" : area.get("RecAreaName"),
-        "id" : area.get("RecAreaID"),
-        "phone" : area.get("RecAreaPhone"),
-        "email" : area.get("RecAreaEmail"),
-        "address" : clean_address(area.get("RECAREAADDRESS"), "RecArea"),
-        "description" : area.get("RecAreaDescription"),
-        "directions" : area.get("RecAreaDirections"),
-        "coordinates" : area.get("GEOJSON").get("COORDINATES"),
-        "activities" : clean_activities(
-            area.get("ACTIVITY"), RECAREAS, area.get("RecAreaID")),
-        "facilities" : name_id_only(area.get("FACILITY"), "Facility"),
-        "parent_org_id" : area.get("ParentOrgID"),
-        "links" : clean_links(area.get("LINK"))
-		} 
-        for area in rec_areas]
-    return clean_rec_areas
-
+def clean_resource(data, type):
+    if type == "RecArea":
+        clean_resources = [{
+            "name" : area.get("RecAreaName"),
+            "id" : area.get("RecAreaID"),
+            "type" : "RecArea",
+            "phone" : area.get("RecAreaPhone"),
+            "email" : area.get("RecAreaEmail"),
+            "address" : clean_address(area.get("RECAREAADDRESS"), "RecArea"),
+            "description" : area.get("RecAreaDescription"),
+            "directions" : area.get("RecAreaDirections"),
+            "coordinates" : area.get("GEOJSON").get("COORDINATES"),
+            "activities" : clean_activities(
+                area.get("ACTIVITY"), type, area.get("RecAreaID"), area.get("NameID")),
+            "facilities" : name_id_only(area.get("FACILITY"), "Facility"),
+            "parent_org_id" : area.get("ParentOrgID"),
+            "links" : clean_links(area.get("LINK"))
+            } 
+            for area in data]
+        
+    if type == "Facility":
+        clean_resources = [{
+            "name" : facility.get("FacilityName"),
+            "id" : facility.get("FacilityID"),
+            "email" : facility.get("FacilityEmail"),
+            "phone" : facility.get("FacilityPhone"),
+            "address" : clean_address(facility.get("FACILITYADDRESS"), "Facility"),
+            "type" : facility.get("FacilityTypeDescription"),
+            "activities" : clean_activities(
+                facility.get("ACTIVITY"), type, facility.get("FacilityID"), facility.get("NameID")),
+            "ada" : facility.get("FacilityAdaAccess"),
+            "description" : facility.get("FacilityDescription"),
+            "directions" : facility.get("FacilityDirections"),
+            "coordinates" : facility.get("GEOJSON").get("COORDINATES"),
+            "parent_org_id" : facility.get("ParentOrgID"),
+            "parent_rec_area_id" : facility.get("ParentRecAreaID"),
+            "links" : clean_links(facility.get("LINK"))
+            } for facility in data]
     
-def clean_facilities(data):
-    facilities = data
-    clean_facilities = [{
-        "name" : facility.get("FacilityName"),
-        "id" : facility.get("FacilityID"),
-        "email" : facility.get("FacilityEmail"),
-        "phone" : facility.get("FacilityPhone"),
-        "address" : clean_address(facility.get("FACILITYADDRESS"), "Facility"),
-        "type" : facility.get("FacilityTypeDescription"),
-        "activities" : clean_activities(
-            facility.get("ACTIVITY"), FACILITIES, facility.get("FacilityID")),
-        "ada" : facility.get("FacilityAdaAccess"),
-        "description" : facility.get("FacilityDescription"),
-        "directions" : facility.get("FacilityDirections"),
-        "coordinates" : facility.get("GEOJSON").get("COORDINATES"),
-        "parent_org_id" : facility.get("ParentOrgID"),
-        "parent_rec_area_id" : facility.get("ParentRecAreaID"),
-        "links" : clean_links(facility.get("LINK"))
-		} for facility in facilities]
-    return clean_facilities
-
+    return clean_resources
 
 def filter_(facilities):
     campgrounds = [facility for facility in facilities if facility ["type"] == "Campground"]
@@ -206,6 +213,7 @@ def clean_address(add_list, resource_type):
     return addresses
 
 def name_id_only(list, type):
+
     info = [{
 		"id" : data.get(f"{type}ID"), 
 		"name" : data.get(f"{type}Name").lower()
@@ -236,3 +244,5 @@ def clean_links(list):
 def get_all_activities():
     data = resource_search("activities")["RECDATA"]
     return name_id_only(data, "Activity")
+
+

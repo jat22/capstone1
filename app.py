@@ -2,7 +2,7 @@ from flask import Flask, redirect, render_template, url_for, request, flash, ses
 from flask_debugtoolbar import DebugToolbarExtension
 import requests, json
 from keys import REC_API_KEY, MAPS_KEY, TOMTOM_KEY
-from func import get_coordinates, geolocation_search, resource_search, activities_with_parent_resources_by_location, recareas_by_location, campgrounds_by_location, name_id_only
+from func import get_coordinates, geolocation_search, resource_search, activities_with_parent_resources_by_location, recareas_by_location, campgrounds_by_location, name_id_only, get_resource_details
 from sqlalchemy.exc import IntegrityError
 
 from models import db, connect_db, RecArea, Facility, RecAreaFacility, Link, FacilityActivity, Activity, TripActivity, Trip, CampgroundStays, User, CheckList, CheckListItem
@@ -25,9 +25,16 @@ db.create_all()
 
 REC_BASE_URL = "https://ridb.recreation.gov/api/v1"
 GEOCODE_BASE_URL = f"https://api.tomtom.com/search/2/geocode/"
+
+ACTIVITIES = "activities"
+CAMPSITES = "campsites"
+EVENTS = "events"
+FACILITIES = "facilities"
+PERMIT = "permitentrances"
+RECAREAS = "recareas"
+TOURS = "tours"
 CURR_USER = "curr_user"
-CURR_TRIP = "curr_trip"
-CURR_RESULTS = "curr_results"
+
 
 def do_login(user):
     session[CURR_USER] = user.username
@@ -65,6 +72,18 @@ def show_search_results():
 
 
     return render_template('search.html', results=results, search_type=search_type)
+
+@app.route('/RecArea/<int:rec_id>')
+def show_rec_details(rec_id):
+    rec = get_resource_details("RecArea", rec_id)
+    
+    return render_template('resource-details.html', resource=rec[0])
+
+@app.route('/Facility/<int:fac_id>')
+def show_fac_details(fac_id):
+    fac = get_resource_details("Facility", fac_id)
+    
+    return render_template('resource-details.html', resource=fac[0])
 
 @app.route('/activities/<activity>')
 def show_activity(activity):
