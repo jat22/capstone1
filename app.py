@@ -2,7 +2,7 @@ from flask import Flask, redirect, render_template, url_for, request, flash, ses
 from flask_debugtoolbar import DebugToolbarExtension
 import requests, json
 from keys import REC_API_KEY, MAPS_KEY, TOMTOM_KEY
-from func import get_coordinates, geolocation_search, resource_search, activities_with_parent_resources_by_location, recareas_by_location, campgrounds_by_location
+from func import get_coordinates, geolocation_search, resource_search, activities_with_parent_resources_by_location, recareas_by_location, campgrounds_by_location, name_id_only
 from sqlalchemy.exc import IntegrityError
 
 from models import db, connect_db, RecArea, Facility, RecAreaFacility, Link, FacilityActivity, Activity, TripActivity, Trip, CampgroundStays, User, CheckList, CheckListItem
@@ -27,6 +27,7 @@ REC_BASE_URL = "https://ridb.recreation.gov/api/v1"
 GEOCODE_BASE_URL = f"https://api.tomtom.com/search/2/geocode/"
 CURR_USER = "curr_user"
 CURR_TRIP = "curr_trip"
+CURR_RESULTS = "curr_results"
 
 def do_login(user):
     session[CURR_USER] = user.username
@@ -48,10 +49,10 @@ def add_user_to_g():
 def show_home():
     return render_template('home.html')
 
-@app.route('/api/search')
+@app.route('/search')
 def show_search_results():
-    search_type = request.args.get("search_type")
-    location_type = request.args.get("location_type")
+    search_type = request.args.get("search-type")
+    location_type = request.args.get("location-type")
     city = request.args.get("city")
     state = request.args.get("state")
     zip = request.args.get("zip")
@@ -62,7 +63,16 @@ def show_search_results():
     if search_type == "campgrounds":
         results = campgrounds_by_location(location_type, city, state, zip)
 
-    return results
+    raise
+    session[CURR_RESULTS] = "TEST"
+
+    return render_template('search.html', results=results, search_type=search_type)
+
+@app.route('/activities/<activity>')
+def show_activity(activity):
+
+    # recareas = [activity['reacareas'] for activity in session[CURR_RESULTS] if activity['id'] == activity]
+    return render_template('resource-details.html', activity=activity)
 
 @app.route('/signup', methods=["GET", "POST"])
 def signup():

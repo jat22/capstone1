@@ -38,34 +38,37 @@ def activities_with_parent_resources_by_location(location_type, city="", state="
     lat = coords[0].get('lat')
     long = coords[0].get('lon')
 
-    recareas = clean_rec_areas(resource_search(RECAREAS, lat=lat, long=long)["RECDATA"])
-    recarea_activites = get_activity_names(recareas)
+    recareas = min_data(resource_search(RECAREAS, lat=lat, long=long)["RECDATA"], "RecArea")
+    facilities = min_data(resource_search(FACILITIES, lat=lat, long=long)["RECDATA"], "Facility")
 
-    facilities = clean_facilities(resource_search(FACILITIES, lat=lat, long=long)["RECDATA"])
-    facility_activities = get_activity_names(facilities)
+    fac_rec_data = recareas + facilities
+    print(fac_rec_data)
+    fac_rec_activities =[]
+    all_activities_dict = {}
 
-    activity_names = list(set(recarea_activites + facility_activities))
+    for fac_rec in fac_rec_data:
+        for activity in fac_rec["activities"]:
+            fac_rec_activities.append(activity)
+    
+    for a in fac_rec_activities:
+        name = a["name"]
+        parent_type = a["parent_type"]
+        parent_id = a["parent_id"]
+        parent_name = a["parent_name"]
 
-    activities = [{"id" : activity,
-                   "recareas" : [], 
-                   "facilities" : []} 
-                  for activity in activity_names]
+        if name not in all_activities_dict:
+            all_activities_dict[name] = ({"name" : name, 
+                                    "parents" : [{"type" : parent_type, "id" : parent_id, "name" : parent_name}]})
+        else:
+            all_activities_dict[name]['parents'].append({"type" : parent_type, "id" : parent_id, "name" : parent_name})
 
-    for recarea in recareas:
-        for activity in recarea.get('activities'):
-            if activity.get("name") in activity_names:
-                for act in activities:
-                    if act["id"] == activity["name"]:
-                        act["recareas"].append(recarea)
+    all_activites_parents = [all_activities_dict[act] for act in all_activities_dict]
 
-    for facility in facilities:
-        for activity in facility.get('activities'):
-            if activity.get("name") in activity_names:
-                for act in activities:
-                    if act["id"] == activity["name"]:
-                        act["facilities"].append(facility)
+    print(all_activites_parents)
 
-    return activities
+    return all_activites_parents
+
+
 
 def recareas_by_location(location_type, city="", state="", zip=""):
     coords = get_coordinates(location_type, city, state, zip)
@@ -117,6 +120,29 @@ def get_activity_names(resources):
         for activity in resource.get("activities"):
             activities.append(activity.get('name'))
     return activities
+
+
+def min_data(data, type):
+    rec_areas = data
+    clean_rec_areas = [{
+        "name" : area.get(f"{type}Name"),
+        "id" : area.get(f"{type}ID"),
+        "activities" : clean_activities(
+            area.get("ACTIVITY"), type, area.get(f"{type}ID"), area.get(f"{type}Name")),
+        }
+        for area in rec_areas]
+    return clean_rec_areas
+
+# def facility_ min_data(data):
+#     facilities = data
+#     clean_facilities = [{
+#         "name" : facility.get("FacilityName"),
+#         "id" : facility.get("FacilityID"),
+#         "activities" : clean_activities(
+#             facility.get("ACTIVITY"), RECAREAS, facility.get("FacilityID")),
+#         }
+#         for facility in facilities]
+#     return clean_facilities
 
 def clean_rec_areas(data):
     rec_areas = data
@@ -187,12 +213,12 @@ def name_id_only(list, type):
 		for data in list]
     return info
 
-def clean_activities(list, parentType, parentID):
+def clean_activities(list, parentType, parentID, parentName):
     activities = [{
-        "id" : data.get("AcitivtyID"), 
 		"name" : data.get("ActivityName").lower(),
         "parent_type" : parentType,
-        "parent_id" : parentID
+        "parent_id" : parentID,
+        "parent_name" : parentName
         }
         for data in list]
     return activities
@@ -210,5 +236,3 @@ def clean_links(list):
 def get_all_activities():
     data = resource_search("activities")["RECDATA"]
     return name_id_only(data, "Activity")
-
-

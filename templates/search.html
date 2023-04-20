@@ -37,7 +37,7 @@
 			<ul class="list-group list-group-flush">
 				{% for result in results %}
 				<li class="list-group-item" id="rec#{{result['id']}}">
-					<a href="/recarea/{{result['id']}}">{{result['name']}}</a>
+					<a href="/{{search_type}}/{{result['id']}}">{{result['id']}}</a>
 				{#{% if curr_trip %}
 				<form action="/activities/{{curr_trip}}" method="PATCH">
 					<button class="btn btn-secondary">Add</button>
