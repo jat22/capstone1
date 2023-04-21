@@ -12,9 +12,14 @@
 			<ul class="list-group list-group-flush" id="results-list">
 				{% for result in results %}
 				<li class="list-group-item" id="{{result['id']}}">
-					<form action="/activity">
-						<input type="hidden" name="activity-id" value="{{result['id']}}">
-						<button type="submit" class="btn btn-link">{{result["name"]}}</button>
+					{% if result['type'] == 'activity' %}
+					<form action="/{{ result['type'] }}">
+					{% else %}
+					<form action="/{{ result['type'] }}/{{ result['id']}}">
+					{% endif %}
+						<input type="hidden" name="resource-id" value="{{ result['id'] }}">
+						<input type="hidden" name="resource-type" value="{{ result['type'] }}">
+						<button type="submit" class="btn btn-link">{{ result["name"] }}</button>
 					</form>
 				</li>
 				{% endfor %}

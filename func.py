@@ -67,7 +67,7 @@ def activities_with_parent_resources_by_location(location_type, city="", state="
         parent_name = a["parent_name"]
 
         if name not in all_activities_dict:
-            all_activities_dict[name] = ({"name" : name, "id" : id,
+            all_activities_dict[name] = ({"name" : name, "id" : id, "type" : "activity",
                                     "parents" : [{"type" : parent_type, "id" : parent_id, "name" : parent_name}]})
         else:
             all_activities_dict[name]['parents'].append({"type" : parent_type, "id" : parent_id, "name" : parent_name})
@@ -93,10 +93,10 @@ def campgrounds_by_location(location_type, city="", state="", zip=""):
     lat = coords[0].get('lat')
     long = coords[0].get('lon')
 
-    facilities = clean_resource(resource_search(FACILITIES, lat=lat, long=long)["RECDATA"], "Facility")
-    campgrounds = filter_(facilities)
+    facilities = clean_resource(resource_search(FACILITIES, lat=lat, long=long, query="camping")["RECDATA"], "Facility")
+    # campgrounds = filter_facilities(facilities, "Campground")
 
-    return campgrounds
+    return facilities
 
 def get_resource_details(type, id):
     endpoint = ""
@@ -182,7 +182,7 @@ def clean_resource(data, type):
             "email" : facility.get("FacilityEmail"),
             "phone" : facility.get("FacilityPhone"),
             "address" : clean_address(facility.get("FACILITYADDRESS"), "Facility"),
-            "type" : facility.get("FacilityTypeDescription"),
+            "type" : "Facility",
             "activities" : clean_activities(
                 facility.get("ACTIVITY"), type, facility.get("FacilityID"), facility.get("NameID")),
             "ada" : facility.get("FacilityAdaAccess"),
@@ -196,9 +196,9 @@ def clean_resource(data, type):
     
     return clean_resources
 
-def filter_(facilities):
-    campgrounds = [facility for facility in facilities if facility ["type"] == "Campground"]
-    return campgrounds
+def filter_facilities(facilities, filter_type):
+    filtered_facilities = [facility for facility in facilities if facility ["type"] == filter_type]
+    return filtered_facilities
 
 
 def clean_address(add_list, resource_type):

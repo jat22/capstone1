@@ -63,6 +63,8 @@ def show_search_results():
     city = request.args.get("city")
     state = request.args.get("state")
     zip = request.args.get("zip")
+    if not search_type:
+        results = None
     if search_type == "activities" :
         results = activities_with_parent_resources_by_location(location_type, city, state, zip)
     if search_type == "parks":
@@ -75,8 +77,8 @@ def show_search_results():
 
 @app.route('/activity')
 def show_activity_details():
-    activity_id = request.args.get("activity-id")
-    return render_template("activity-details.html", activity_id = activity_id)
+    resource_id = request.args.get("resource-id")
+    return render_template("activity-details.html", resource_id = resource_id)
 
 
 @app.route('/RecArea/<int:rec_id>')
