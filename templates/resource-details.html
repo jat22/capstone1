@@ -22,7 +22,7 @@
 				<div class="card-body">
 					<h4 class="card-title">Links:</h4>
 					{% for link in resource['links']%}
-					<a href="{{ link['url'] }}">{{ link['title'] }}</a>
+					<a href="{{ link['url'] }}">{{ link['title'] }}</a><span> |</span>
 					{% endfor %}
 				</div>
 			</div>

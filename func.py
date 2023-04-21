@@ -57,15 +57,17 @@ def activities_with_parent_resources_by_location(location_type, city="", state="
     for fac_rec in fac_rec_data:
         for activity in fac_rec["activities"]:
             fac_rec_activities.append(activity)
-    
+
+
     for a in fac_rec_activities:
         name = a["name"]
+        id = a["id"]
         parent_type = a["parent_type"]
         parent_id = a["parent_id"]
         parent_name = a["parent_name"]
 
         if name not in all_activities_dict:
-            all_activities_dict[name] = ({"name" : name, 
+            all_activities_dict[name] = ({"name" : name, "id" : id,
                                     "parents" : [{"type" : parent_type, "id" : parent_id, "name" : parent_name}]})
         else:
             all_activities_dict[name]['parents'].append({"type" : parent_type, "id" : parent_id, "name" : parent_name})
@@ -224,6 +226,7 @@ def name_id_only(list, type):
 def clean_activities(list, parentType, parentID, parentName):
     activities = [{
 		"name" : data.get("ActivityName").lower(),
+        "id" : data.get("ActivityID"),
         "parent_type" : parentType,
         "parent_id" : parentID,
         "parent_name" : parentName

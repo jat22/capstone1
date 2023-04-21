@@ -73,6 +73,12 @@ def show_search_results():
 
     return render_template('search.html', results=results, search_type=search_type)
 
+@app.route('/activity')
+def show_activity_details():
+    activity_id = request.args.get("activity-id")
+    return render_template("activity-details.html", activity_id = activity_id)
+
+
 @app.route('/RecArea/<int:rec_id>')
 def show_rec_details(rec_id):
     rec = get_resource_details("RecArea", rec_id)
@@ -85,11 +91,10 @@ def show_fac_details(fac_id):
     
     return render_template('resource-details.html', resource=fac[0])
 
-@app.route('/activities/<activity>')
+@app.route('/activities/<int:act_id>')
 def show_activity(activity):
     
     results = request.args.get("results")
-    raise
 
     return render_template('resource-details.html', activity=activity)
 
